@@ -10,6 +10,23 @@ use core::{
 // use embedded_hal::serial::nb::Write;
 use riscv;
 
+// This is a type alias for the enabled `restore-state-*` feature.
+// For example, it is `bool` if you enable `restore-state-bool`.
+use critical_section::RawRestoreState;
+
+struct MyCriticalSection;
+critical_section::set_impl!(MyCriticalSection);
+
+unsafe impl critical_section::Impl for MyCriticalSection {
+    unsafe fn acquire() -> RawRestoreState {
+        // TODO
+    }
+
+    unsafe fn release(token: RawRestoreState) {
+        // TODO
+    }
+}
+
 const STACK_SIZE: usize = 2 * 1024; // 2KiB
 
 #[link_section = ".bss.uninit"]
@@ -59,7 +76,7 @@ pub unsafe extern "C" fn start() -> ! {
 }
 
 fn main() {
-    let mut peripherals = unsafe { ch32v30x::Peripherals::steal() };
+    let mut peripherals = ch32v30x::Peripherals::take().unwrap();
     let gpioa = &peripherals.GPIOA;
     gpioa.outdr.modify(|_, w| w.odr0().set_bit());
 

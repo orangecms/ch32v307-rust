@@ -31,11 +31,12 @@ checksum = "dcb6dd1c2376d2e096796e234a70e17e94cc2d5d54ff8ce42b28cef1d0d359a4"
 
 [[package]]
 name = "ch32v3"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1775ea0dfd67e91ecbc7d372e59ff3b51c8604c07e3796fbf07eb15837ef2667"
+checksum = "c060e506162a020715423ef9f1d4c8a7a052ec89c4ce4b3f4ceed5335b627070"
 dependencies = [
- "riscv 0.10.0",
+ "critical-section",
+ "riscv",
  "riscv-rt",
  "vcell",
 ]
@@ -45,9 +46,10 @@ name = "ch32v307-test"
 version = "0.1.0"
 dependencies = [
  "ch32v3",
+ "critical-section",
  "embedded-hal 1.0.0-alpha.9",
  "nb 1.0.0",
- "riscv 0.9.0",
+ "riscv",
  "spin",
 ]
 
@@ -163,24 +165,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "riscv"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "169fa82a2be03db484b13863f6a88f7f154a027a332c471cc164775671e81a5a"
-dependencies = [
- "bit_field",
- "critical-section",
- "embedded-hal 0.2.7",
-]
-
-[[package]]
 name = "riscv-rt"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7818495e5392d1ebb158a6f65da26c23d7f0fe93f7d6affa6395bf5b77035eae"
 dependencies = [
  "r0",
- "riscv 0.9.0",
+ "riscv",
  "riscv-rt-macros",
  "riscv-target",
 ]
