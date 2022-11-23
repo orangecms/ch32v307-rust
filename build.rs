@@ -60,12 +60,9 @@ SECTIONS {
 	.bss : ALIGN(4) {
 		. = ALIGN(4);
 		*(.bss.uninit)
-		sbss = .;
 		*(.bss .bss.*)
-		*(.sbss .sbss.*)
 		*(COMMON*)
 		. = ALIGN(4);
-		ebss = .;
 	} >RAM AT>FLASH
 
 	PROVIDE( end = . );
