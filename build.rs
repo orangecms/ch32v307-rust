@@ -51,13 +51,6 @@ SECTIONS {
 	} >RAM AT>FLASH
 	sidata = LOADADDR(.data);
 	.bss : ALIGN(4) {
-		*(.bss.uninit)
-		sbss = .;
-		*(.bss .bss.*)
-		*(.sbss .sbss.*)
-		ebss = .;
-	} >RAM AT>FLASH
-	.bss : ALIGN(4) {
 		. = ALIGN(4);
 		*(.bss.uninit)
 		*(.bss .bss.*)
