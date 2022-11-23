@@ -36,7 +36,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c060e506162a020715423ef9f1d4c8a7a052ec89c4ce4b3f4ceed5335b627070"
 dependencies = [
  "critical-section",
- "riscv",
+ "riscv 0.9.0",
  "riscv-rt",
  "vcell",
 ]
@@ -49,7 +49,9 @@ dependencies = [
  "critical-section",
  "embedded-hal 1.0.0-alpha.9",
  "nb 1.0.0",
- "riscv",
+ "panic-halt",
+ "riscv 0.10.0",
+ "riscv-rt",
  "spin",
 ]
 
@@ -113,6 +115,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 
 [[package]]
+name = "panic-halt"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de96540e0ebde571dc55c73d60ef407c653844e6f9a1e2fdbd40c07b9252d812"
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -165,13 +173,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "riscv"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "169fa82a2be03db484b13863f6a88f7f154a027a332c471cc164775671e81a5a"
+dependencies = [
+ "bit_field",
+ "critical-section",
+ "embedded-hal 0.2.7",
+]
+
+[[package]]
 name = "riscv-rt"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7818495e5392d1ebb158a6f65da26c23d7f0fe93f7d6affa6395bf5b77035eae"
 dependencies = [
  "r0",
- "riscv",
+ "riscv 0.9.0",
  "riscv-rt-macros",
  "riscv-target",
 ]
