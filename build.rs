@@ -34,93 +34,12 @@ SECTIONS {
         . = ALIGN(64);
     } >FLASH AT>FLASH
 
-	.text :
-	{
+	.text : {
 		. = ALIGN(4);
-		*(.text)
-		*(.text.*)
-		*(.rodata)
-		*(.rodata*)
-		*(.glue_7)
-		*(.glue_7t)
-		*(.gnu.linkonce.t.*)
+        KEEP(*(.text.entry))
+        *(.text .text.*)
 		. = ALIGN(4);
 	} >FLASH AT>FLASH 
-
-	.fini :
-	{
-		KEEP(*(SORT_NONE(.fini)))
-		. = ALIGN(4);
-	} >FLASH AT>FLASH
-
-	PROVIDE( _etext = . );
-	PROVIDE( _eitcm = . );	
-
-	.preinit_array  :
-	{
-	  PROVIDE_HIDDEN (__preinit_array_start = .);
-	  KEEP (*(.preinit_array))
-	  PROVIDE_HIDDEN (__preinit_array_end = .);
-	} >FLASH AT>FLASH 
-	
-	.init_array     :
-	{
-	  PROVIDE_HIDDEN (__init_array_start = .);
-	  KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
-	  KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
-	  PROVIDE_HIDDEN (__init_array_end = .);
-	} >FLASH AT>FLASH 
-	
-	.fini_array     :
-	{
-	  PROVIDE_HIDDEN (__fini_array_start = .);
-	  KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
-	  KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
-	  PROVIDE_HIDDEN (__fini_array_end = .);
-	} >FLASH AT>FLASH 
-	
-	.ctors          :
-	{
-	  /* gcc uses crtbegin.o to find the start of
-	     the constructors, so we make sure it is
-	     first.  Because this is a wildcard, it
-	     doesn't matter if the user does not
-	     actually link against crtbegin.o; the
-	     linker won't look for a file to match a
-	     wildcard.  The wildcard also means that it
-	     doesn't matter which directory crtbegin.o
-	     is in.  */
-	  KEEP (*crtbegin.o(.ctors))
-	  KEEP (*crtbegin?.o(.ctors))
-	  /* We don't want to include the .ctor section from
-	     the crtend.o file until after the sorted ctors.
-	     The .ctor section from the crtend file contains the
-	     end of ctors marker and it must be last */
-	  KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .ctors))
-	  KEEP (*(SORT(.ctors.*)))
-	  KEEP (*(.ctors))
-	} >FLASH AT>FLASH 
-	
-	.dtors          :
-	{
-	  KEEP (*crtbegin.o(.dtors))
-	  KEEP (*crtbegin?.o(.dtors))
-	  KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .dtors))
-	  KEEP (*(SORT(.dtors.*)))
-	  KEEP (*(.dtors))
-	} >FLASH AT>FLASH 
-
-	.dalign :
-	{
-		. = ALIGN(4);
-		PROVIDE(_data_vma = .);
-	} >RAM AT>FLASH	
-
-	.dlalign :
-	{
-		. = ALIGN(4); 
-		PROVIDE(_data_lma = .);
-	} >FLASH AT>FLASH
 
 	.data :
 	{
@@ -142,32 +61,33 @@ SECTIONS {
 		PROVIDE( _edata = .);
 	} >RAM AT>FLASH
 
-	.bss :
-	{
+	.bss : {
 		. = ALIGN(4);
 		PROVIDE( _sbss = .);
-  	    *(.sbss*)
-        *(.gnu.linkonce.sb.*)
-		*(.bss*)
-     	*(.gnu.linkonce.b.*)		
+        *(.bss.uninit)
+        sbss = .;
+        *(.bss .bss.*)
+        *(.sbss .sbss.*)
 		*(COMMON*)
 		. = ALIGN(4);
 		PROVIDE( _ebss = .);
+        ebss = .;
 	} >RAM AT>FLASH
 
 	PROVIDE( _end = _ebss);
 	PROVIDE( end = . );
-
-    .stack ORIGIN(RAM) + LENGTH(RAM) - __stack_size :
-    {
+    /*
+    .stack ORIGIN(RAM) + LENGTH(RAM) - __stack_size : {
         PROVIDE( _heap_end = . );    
         . = ALIGN(4);
         PROVIDE(_susrstack = . );
         . = . + __stack_size;
         PROVIDE( _eusrstack = .);
     } >RAM
+    */
     /DISCARD/ : {
         *(.eh_frame)
+        *(.debug_*)
     }
 }";
 
