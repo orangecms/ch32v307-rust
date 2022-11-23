@@ -18,14 +18,6 @@ MEMORY {
 
 SECTIONS {
 	/*
-	.init : {
-		_sinit = .;
-		. = ALIGN(4);
-		KEEP(*(SORT_NONE(.init)))
-		. = ALIGN(4);
-		_einit = .;
-	} >FLASH AT>FLASH
-
 	.vector: {
 		*(.vector);
 		. = ALIGN(64);
@@ -50,6 +42,7 @@ SECTIONS {
 		erodata = .;
 	} >RAM AT>FLASH
 	.data : ALIGN(8) {
+		PROVIDE( __global_pointer$ = . + 0x800 );
 		sdata = .;
 		*(.data .data.*)
 		*(.sdata .sdata.*)
@@ -57,57 +50,25 @@ SECTIONS {
 		edata = .;
 	} >RAM AT>FLASH
 	sidata = LOADADDR(.data);
-	.bss (NOLOAD) : ALIGN(4) {
+	.bss : ALIGN(4) {
 		*(.bss.uninit)
 		sbss = .;
 		*(.bss .bss.*)
 		*(.sbss .sbss.*)
 		ebss = .;
 	} >RAM AT>FLASH
-	/*
-	.data : {
-		*(.gnu.linkonce.r.*)
-		*(.data .data.*)
-		*(.gnu.linkonce.d.*)
-		. = ALIGN(8);
-		PROVIDE( __global_pointer$ = . + 0x800 );
-		*(.sdata .sdata.*)
-		*(.sdata2.*)
-		*(.gnu.linkonce.s.*)
-		. = ALIGN(8);
-		*(.srodata.cst16)
-		*(.srodata.cst8)
-		*(.srodata.cst4)
-		*(.srodata.cst2)
-		*(.srodata .srodata.*)
+	.bss : ALIGN(4) {
 		. = ALIGN(4);
-		PROVIDE( _edata = .);
-	} >RAM AT>FLASH
-	*/
-	.bss : {
-		. = ALIGN(4);
-		PROVIDE( _sbss = .);
 		*(.bss.uninit)
 		sbss = .;
 		*(.bss .bss.*)
 		*(.sbss .sbss.*)
 		*(COMMON*)
 		. = ALIGN(4);
-		PROVIDE( _ebss = .);
 		ebss = .;
 	} >RAM AT>FLASH
 
-	PROVIDE( _end = _ebss);
 	PROVIDE( end = . );
-    /*
-	.stack ORIGIN(RAM) + LENGTH(RAM) - __stack_size : {
-		PROVIDE( _heap_end = . );	
-		. = ALIGN(4);
-		PROVIDE(_susrstack = . );
-		. = . + __stack_size;
-		PROVIDE( _eusrstack = .);
-	} >RAM
-    */
 	/DISCARD/ : {
 		*(.eh_frame)
 		*(.debug_*)
