@@ -17,8 +17,8 @@ MEMORY {
 }
 
 SECTIONS {
-    .init :
-	{
+	/*
+	.init : {
 		_sinit = .;
 		. = ALIGN(4);
 		KEEP(*(SORT_NONE(.init)))
@@ -26,67 +26,92 @@ SECTIONS {
 		_einit = .;
 	} >FLASH AT>FLASH
 
-    .vector :
-    {
-        *(.vector);
-        . = ALIGN(64);
-    } >FLASH AT>FLASH
-
+	.vector: {
+		*(.vector);
+		. = ALIGN(64);
+	} >FLASH AT>FLASH
+	*/
+	.head : {
+		*(.head.text)
+		KEEP(*(.debug))
+		KEEP(*(.bootblock.boot))
+	} >FLASH AT>FLASH
 	.text : {
 		. = ALIGN(4);
-        KEEP(*(.text.entry))
-        *(.text .text.*)
+		KEEP(*(.text.entry))
+		*(.text .text.*)
 		. = ALIGN(4);
 	} >FLASH AT>FLASH 
-
-	.data :
-	{
-    	*(.gnu.linkonce.r.*)
-    	*(.data .data.*)
-    	*(.gnu.linkonce.d.*)
+	.rodata : ALIGN(8) {
+		srodata = .;
+		*(.rodata .rodata.*)
+		*(.srodata .srodata.*)
 		. = ALIGN(8);
-    	PROVIDE( __global_pointer$ = . + 0x800 );
-    	*(.sdata .sdata.*)
+		erodata = .;
+	} >RAM AT>FLASH
+	.data : ALIGN(8) {
+		sdata = .;
+		*(.data .data.*)
+		*(.sdata .sdata.*)
+		. = ALIGN(8);
+		edata = .;
+	} >RAM AT>FLASH
+	sidata = LOADADDR(.data);
+	.bss (NOLOAD) : ALIGN(4) {
+		*(.bss.uninit)
+		sbss = .;
+		*(.bss .bss.*)
+		*(.sbss .sbss.*)
+		ebss = .;
+	} >RAM AT>FLASH
+	/*
+	.data : {
+		*(.gnu.linkonce.r.*)
+		*(.data .data.*)
+		*(.gnu.linkonce.d.*)
+		. = ALIGN(8);
+		PROVIDE( __global_pointer$ = . + 0x800 );
+		*(.sdata .sdata.*)
 		*(.sdata2.*)
-    	*(.gnu.linkonce.s.*)
-    	. = ALIGN(8);
-    	*(.srodata.cst16)
-    	*(.srodata.cst8)
-    	*(.srodata.cst4)
-    	*(.srodata.cst2)
-    	*(.srodata .srodata.*)
-    	. = ALIGN(4);
+		*(.gnu.linkonce.s.*)
+		. = ALIGN(8);
+		*(.srodata.cst16)
+		*(.srodata.cst8)
+		*(.srodata.cst4)
+		*(.srodata.cst2)
+		*(.srodata .srodata.*)
+		. = ALIGN(4);
 		PROVIDE( _edata = .);
 	} >RAM AT>FLASH
-
+	*/
 	.bss : {
 		. = ALIGN(4);
 		PROVIDE( _sbss = .);
-        *(.bss.uninit)
-        sbss = .;
-        *(.bss .bss.*)
-        *(.sbss .sbss.*)
+		*(.bss.uninit)
+		sbss = .;
+		*(.bss .bss.*)
+		*(.sbss .sbss.*)
 		*(COMMON*)
 		. = ALIGN(4);
 		PROVIDE( _ebss = .);
-        ebss = .;
+		ebss = .;
 	} >RAM AT>FLASH
 
 	PROVIDE( _end = _ebss);
 	PROVIDE( end = . );
     /*
-    .stack ORIGIN(RAM) + LENGTH(RAM) - __stack_size : {
-        PROVIDE( _heap_end = . );    
-        . = ALIGN(4);
-        PROVIDE(_susrstack = . );
-        . = . + __stack_size;
-        PROVIDE( _eusrstack = .);
-    } >RAM
+	.stack ORIGIN(RAM) + LENGTH(RAM) - __stack_size : {
+		PROVIDE( _heap_end = . );	
+		. = ALIGN(4);
+		PROVIDE(_susrstack = . );
+		. = . + __stack_size;
+		PROVIDE( _eusrstack = .);
+	} >RAM
     */
-    /DISCARD/ : {
-        *(.eh_frame)
-        *(.debug_*)
-    }
+	/DISCARD/ : {
+		*(.eh_frame)
+		*(.debug_*)
+	}
 }";
 
 fn main() {
