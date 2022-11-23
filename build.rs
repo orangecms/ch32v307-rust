@@ -56,6 +56,7 @@ SECTIONS {
 		*(.bss .bss.*)
 		*(COMMON*)
 		. = ALIGN(4);
+        ebss = .;
 	} >RAM AT>FLASH
 
 	PROVIDE( end = . );
