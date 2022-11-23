@@ -10,7 +10,7 @@ use core::{
 // use embedded_hal::serial::nb::Write;
 use riscv;
 
-const STACK_SIZE: usize = 1 * 1024; // 1KiB
+const STACK_SIZE: usize = 2 * 1024; // 2KiB
 
 #[link_section = ".bss.uninit"]
 static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
@@ -37,8 +37,8 @@ pub unsafe extern "C" fn start() -> ! {
         "csrw   mstatus, zero",
         // 2. initialize programming language runtime
         // clear bss segment
-        "la     t0, sbss",
-        "la     t1, ebss",
+        "la     t0, _sbss",
+        "la     t1, _ebss",
         "1:",
         "bgeu   t0, t1, 1f",
         "sw     x0, 0(t0)",
