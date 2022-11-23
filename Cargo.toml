@@ -1,0 +1,19 @@
+[package]
+name = "ch32v307-test"
+version = "0.1.0"
+edition = "2021"
+authors = [
+  "Daniel Maslowski <info@orangecms.org>"
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+embedded-hal = "1.0.0-alpha.8"
+nb = "1"
+riscv = "0.9.0"
+spin = "0.9"
+
+[dependencies.ch32v3]
+version = "0.1.4"
+features = ["ch32v30x", "rt"]
