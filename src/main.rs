@@ -20,12 +20,25 @@ extern "C" fn DefaultHandler() {}
 #[entry]
 fn main() -> ! {
     let peripherals = ch32v30x::Peripherals::take().unwrap();
+
+    let rcc = peripherals.RCC;
+    rcc.apb2pcenr.modify(|_, w| w.iopben().set_bit());
+
     let gpioa = &peripherals.GPIOA;
     gpioa.outdr.modify(|_, w| w.odr0().set_bit());
+
     let gpiob = &peripherals.GPIOB;
 
+    // Output max 50MHz
+    // Push-pull
+    unsafe {
+        gpiob
+            .cfghr
+            .modify(|_, w| w.cnf8().bits(0b00).mode8().bits(0b11))
+    };
+
     // println!("Hello, world!");
-        // HSI 8MHz
+    // HSI 8MHz
     // 4 opcodes to do a nop sleep here
     let cycle = 8_000_000 / 4;
     loop {
