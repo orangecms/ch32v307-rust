@@ -27,6 +27,9 @@ unsafe impl critical_section::Impl for MyCriticalSection {
     }
 }
 
+#[no_mangle]
+extern "C" fn DefaultHandler() {}
+
 const STACK_SIZE: usize = 2 * 1024; // 2KiB
 
 #[link_section = ".bss.uninit"]
