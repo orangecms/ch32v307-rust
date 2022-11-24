@@ -5,7 +5,7 @@ use riscv_rt::entry;
 use core::{
     arch::asm,
     panic::PanicInfo,
-    ptr::slice_from_raw_parts,
+    ptr::{slice_from_raw_parts, write_volatile},
 };
 // use embedded_hal::serial::nb::Write;
 use panic_halt as _;
@@ -30,16 +30,35 @@ fn main() -> ! {
     let peripherals = ch32v30x::Peripherals::take().unwrap();
 
     let rcc = peripherals.RCC;
-    rcc.apb2pcenr.modify(|_, w| w.iopben().set_bit());
+    rcc.ctlr.modify(|_, w| w.pllon().set_bit().pll2on().set_bit().pll3on().set_bit());
+    sleep(15);
+    rcc.ctlr.modify(|_, w| w.csson().set_bit().hseon().clear_bit());
+    sleep(15);
+    rcc.ctlr.modify(|_, w| w.hseon().set_bit());
+    sleep(15);
+
+    rcc.apb2pcenr.modify(|_, w| w.iopaen().set_bit().iopben().set_bit().usart1en().set_bit());
+    sleep(15);
+
+    unsafe {
+        // PLLMUL 0b0111 means 9x 8MHz = 72MHz
+        rcc.cfgr0.modify(|_, w| w.mco().bits(0b1000).pllmul().bits(0b0111));
+    sleep(15);
+        // use PLL oscillator as system clock
+        rcc.cfgr0.modify(|_, w| w.sw().bits(0b10));
+    sleep(15);
+    }
 
     let gpioa = &peripherals.GPIOA;
-    gpioa.outdr.modify(|_, w| w.odr0().set_bit());
-
     let gpiob = &peripherals.GPIOB;
 
     // Output max 50MHz
     // Push-pull
     unsafe {
+        gpioa.cfglr.modify(|_, w| w.cnf0().bits(0b00).mode0().bits(0b11));
+        gpioa
+            .cfghr
+            .modify(|_, w| w.cnf9().bits(0b00).mode9().bits(0b11).cnf10().bits(0b00).mode10().bits(0b11));
         gpiob
             .cfglr
             .modify(|_, w| w.cnf5().bits(0b00).mode5().bits(0b11).cnf6().bits(0b00).mode6().bits(0b11).cnf7().bits(0b00).mode7().bits(0b11));
@@ -47,6 +66,28 @@ fn main() -> ! {
             .cfghr
             .modify(|_, w| w.cnf8().bits(0b00).mode8().bits(0b11).cnf9().bits(0b00).mode9().bits(0b11));
     };
+
+    gpioa.outdr.modify(|_, w| w.odr0().set_bit());
+
+    let uart1 = &peripherals.USART1;
+    unsafe {
+        // 12 bits mantissa, last 4 bits are fraction (1/16)
+        uart1.ctlr1.modify(|_, w| w.ue().set_bit().m().clear_bit());
+        // uart1.ctlr1.modify(|_, w| w.te().set_bit());
+        uart1.ctlr2.modify(|_, w| w.stop().bits(0b00));
+        uart1.brr.modify(|_, w| w.div_mantissa().bits(39).div_fraction().bits(1));
+        uart1.datar.modify(|_, w| w.bits(0x42));
+        uart1.datar.modify(|_, w| w.bits(0x42));
+        uart1.datar.modify(|_, w| w.bits(0x42));
+        uart1.datar.modify(|_, w| w.bits(0x42));
+        uart1.datar.modify(|_, w| w.bits(0x42));
+        uart1.datar.modify(|_, w| w.bits(0x42));
+        uart1.datar.modify(|_, w| w.bits(0x42));
+        uart1.datar.modify(|_, w| w.bits(0x42));
+
+        const D: u32 = 0x4001_3804;
+        write_volatile(D as *mut u32, 0x42);
+    }
 
     // println!("Hello, world!");
     // HSI 8MHz
