@@ -72,8 +72,6 @@ fn main() -> ! {
 
     gpioa.outdr.modify(|_, w| w.odr0().set_bit());
 
-    let uart1 = &peripherals.USART1;
-
     let serial = log::Serial::new(peripherals.USART1);
     log::set_logger(serial);
     println!("The meaning of life is to rewrite everything in Rust. 🦀🦀");
