@@ -26,8 +26,8 @@ fn ext_handler() {
     print!("x");
 }
 
-#[export_name = "UserExternal"]
-fn uext_handler() {
+#[export_name = "UserSoft"]
+fn usoft_handler() {
     print!("x");
 }
 
@@ -65,6 +65,15 @@ fn machine_info() {
         None => { println!("impl. ID unknown"); },
         Some(v) => { println!("impl. ID: {:?}", v); },
     }
+}
+
+fn where_am_i() {
+    let mpc = riscv::register::mepc::read();
+    println!("Where am I? {}", mpc);
+    // let spc = riscv::register::sepc::read();
+    // println!("Where is she? {:x}", spc);
+    let upc = riscv::register::uepc::read();
+    println!("Where are you? {}", upc);
 }
 
 #[entry]
@@ -116,12 +125,12 @@ fn main() -> ! {
     println!("The meaning of life is to rewrite everything in Rust. 🦀🦀");
 
     machine_info();
+    where_am_i();
 
     unsafe {
         riscv::interrupt::enable();
-        riscv::register::mie::set_mext();
-        riscv::register::mie::set_uext();
-        riscv::register::mip::set_uext();
+        riscv::register::mie::set_usoft();
+        riscv::register::mip::set_usoft();
     }
 
     // println!("Hello, world!");
