@@ -49,6 +49,24 @@ fn sleep(t: i32) {
     }
 }
 
+/* see https://five-embeddev.com/riscv-isa-manual/latest/machine.html */
+fn machine_info() {
+    match riscv::register::misa::read() {
+        None => { println!("ISA unknown"); },
+        Some(v) => { println!("ISA: {:?}", v); },
+    }
+
+    match riscv::register::mvendorid::read() {
+        None => { println!("vendor unknown"); },
+        Some(v) => { println!("vendor: {:?}", v); },
+    }
+
+    match riscv::register::mimpid::read() {
+        None => { println!("impl. ID unknown"); },
+        Some(v) => { println!("impl. ID: {:?}", v); },
+    }
+}
+
 #[entry]
 fn main() -> ! {
     let peripherals = ch32v30x::Peripherals::take().unwrap();
@@ -97,20 +115,7 @@ fn main() -> ! {
     log::set_logger(serial);
     println!("The meaning of life is to rewrite everything in Rust. 🦀🦀");
 
-    match riscv::register::misa::read() {
-        None => { println!("ISA unknown"); },
-        Some(v) => { println!("ISA: {:?}", v); },
-    }
-
-    match riscv::register::mvendorid::read() {
-        None => { println!("vendor unknown"); },
-        Some(v) => { println!("vendor: {:?}", v); },
-    }
-
-    match riscv::register::mimpid::read() {
-        None => { println!("impl. ID unknown"); },
-        Some(v) => { println!("impl. ID: {:?}", v); },
-    }
+    machine_info();
 
     unsafe {
         riscv::interrupt::enable();
