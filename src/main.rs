@@ -74,12 +74,9 @@ fn main() -> ! {
 
     let uart1 = &peripherals.USART1;
 
-    let mut serial = log::Serial::new(peripherals.USART1);
-    serial.write(0xf0);
-    serial.write(0x9f);
-    serial.write(0xa6);
-    serial.write(0x80);
-    serial.write('\n' as u8);
+    let serial = log::Serial::new(peripherals.USART1);
+    log::set_logger(serial);
+    println!("The meaning of life is to rewrite everything in Rust. 🦀🦀");
 
     // println!("Hello, world!");
     // HSI 8MHz
