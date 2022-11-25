@@ -47,7 +47,7 @@ version = "0.1.0"
 dependencies = [
  "ch32v3",
  "critical-section",
- "embedded-hal 1.0.0-alpha.9",
+ "embedded-hal 1.0.0-alpha.8",
  "nb 1.0.0",
  "panic-halt",
  "riscv 0.10.0",
@@ -73,9 +73,12 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal"
-version = "1.0.0-alpha.9"
+version = "1.0.0-alpha.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "129b101ddfee640565f7c07b301a31d95aa21e5acef21a491c307139f5fa4c91"
+checksum = "c3babfc7fd332142a0b11aebf592992f211f4e01b6222fb04b03aba1bd80018d"
+dependencies = [
+ "nb 1.0.0",
+]
 
 [[package]]
 name = "lazy_static"

@@ -10,7 +10,7 @@ authors = [
 
 [dependencies]
 critical-section = { version = "1.0", optional = true }
-embedded-hal = "1.0.0-alpha.8"
+embedded-hal = "=1.0.0-alpha.8"
 nb = "1"
 panic-halt = "0.2.0"
 riscv = { version = "0.10.0", features = ["critical-section-single-hart"] }

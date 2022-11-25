@@ -74,45 +74,12 @@ fn main() -> ! {
 
     let uart1 = &peripherals.USART1;
 
-    unsafe {
-        // 12 bits mantissa, last 4 bits are fraction (1/16)
-        uart1.ctlr1.modify(|_, w| w.ue().set_bit().m().clear_bit());
-        uart1.ctlr1.modify(|_, w| w.te().set_bit());
-        uart1.ctlr2.modify(|_, w| w.stop().bits(0b00));
-        uart1.brr.modify(|_, w| w.div_mantissa().bits(39).div_fraction().bits(1));
-
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits('w' as u32));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits('o' as u32));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits('o' as u32));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits('p' as u32));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits(' ' as u32));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits('w' as u32));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits('o' as u32));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits('o' as u32));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits('p' as u32));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits(' ' as u32));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits(0xf0));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits(0x9f));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits(0xa6));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits(0x80));
-        while uart1.statr.read().txe() != true {}
-        uart1.datar.modify(|_, w| w.bits('\n' as u32));
-    }
-    let serial = log::Serial::new(uart1);
+    let mut serial = log::Serial::new(peripherals.USART1);
+    serial.write(0xf0);
+    serial.write(0x9f);
+    serial.write(0xa6);
+    serial.write(0x80);
+    serial.write('\n' as u8);
 
     // println!("Hello, world!");
     // HSI 8MHz

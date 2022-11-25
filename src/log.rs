@@ -8,8 +8,8 @@ use embedded_hal::serial::nb::Write;
 use nb::block;
 
 #[derive(Debug)]
-pub struct Serial<'a> {
-    uart: &'a ch32v3::ch32v30x::USART1,
+pub struct Serial {
+    uart: ch32v3::ch32v30x::USART1,
 }
 
 /// Error types that may happen when serial transfer
@@ -25,26 +25,33 @@ impl embedded_hal::serial::Error for Error {
     }
 }
 
-impl Serial<'_> {
+impl Serial {
     #[inline]
-    pub fn new(uart: &ch32v3::ch32v30x::USART1) -> Self {
-        // TODO
-        // uart_init();
+    pub fn new(uart: ch32v3::ch32v30x::USART1) -> Self {
+        // 12 bits mantissa, last 4 bits are fraction (1/16)
+        uart.ctlr1.modify(|_, w| w.ue().set_bit().m().clear_bit());
+        uart.ctlr1.modify(|_, w| w.te().set_bit());
+        unsafe {
+            uart.ctlr2.modify(|_, w| w.stop().bits(0b00));
+            uart.brr.modify(|_, w| w.div_mantissa().bits(39).div_fraction().bits(1));
+        }
         Self { uart }
     }
 }
 
-impl embedded_hal::serial::ErrorType for Serial<'_> {
+impl embedded_hal::serial::ErrorType for Serial {
     type Error = Error;
 }
 
-impl embedded_hal::serial::nb::Write<u8> for Serial<'_> {
-    #[inline]
+impl embedded_hal::serial::nb::Write<u8> for Serial {
     fn write(&mut self, c: u8) -> nb::Result<(), self::Error> {
+        /*
         if self.uart.statr.read().txe() != true {
             return Err(nb::Error::WouldBlock);
         }
+        */
         unsafe {
+            while self.uart.statr.read().txe() != true {}
             self.uart.datar.modify(|_, w| w.bits(c as u32));
         }
         Ok(())
@@ -62,7 +69,7 @@ impl embedded_hal::serial::nb::Write<u8> for Serial<'_> {
     }
 }
 
-type S<'a> = Wrap<Serial<'a>>;
+type S = Wrap<Serial>;
 
 #[doc(hidden)]
 pub(crate) static mut LOGGER: Option<Logger> = None;
@@ -71,11 +78,11 @@ pub(crate) static mut LOGGER: Option<Logger> = None;
 pub(crate) struct Wrap<T>(T);
 
 #[doc(hidden)]
-pub(crate) struct Logger<'a> {
-    pub(crate) inner: S<'a>,
+pub(crate) struct Logger {
+    pub(crate) inner: S,
 }
 
-impl fmt::Write for S<'_> {
+impl fmt::Write for S {
     #[inline]
     fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
         for byte in s.as_bytes() {
