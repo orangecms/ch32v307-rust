@@ -30,7 +30,10 @@ impl Serial {
     pub fn new(uart: ch32v3::ch32v30x::USART1) -> Self {
         // 12 bits mantissa, last 4 bits are fraction (1/16)
         uart.ctlr1.modify(|_, w| w.ue().set_bit().m().clear_bit());
+        // enable transmitter and receiver
         uart.ctlr1.modify(|_, w| w.te().set_bit());
+        // enable interrupts for receiver (RX non-empty)
+        uart.ctlr1.modify(|_, w| w.re().set_bit().rxneie().set_bit());
         unsafe {
             uart.ctlr2.modify(|_, w| w.stop().bits(0b00));
             uart.brr.modify(|_, w| w.div_mantissa().bits(39).div_fraction().bits(1));

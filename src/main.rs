@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use riscv_rt::entry;
+use riscv_rt::{entry, interrupt};
 use core::{
     arch::asm,
     panic::PanicInfo,
@@ -16,8 +16,30 @@ use ch32v3::ch32v30x;
 #[macro_use]
 mod log;
 
+#[export_name = "MachineSoft"]
+fn soft_handler() {
+    print!("x");
+}
+
+#[export_name = "MachineExternal"]
+fn ext_handler() {
+    print!("x");
+}
+
+#[export_name = "UserExternal"]
+fn uext_handler() {
+    print!("x");
+}
+
+#[export_name = "DefaultHandler"]
+fn default_handler(irqn: i16) {
+    // custom default handler
+    print!("x");
+}
+/*
 #[no_mangle]
 extern "C" fn DefaultHandler() {}
+*/
 
 fn sleep(t: i32) {
     for _ in 0..t {
@@ -60,7 +82,7 @@ fn main() -> ! {
         gpioa.cfglr.modify(|_, w| w.cnf0().bits(0b00).mode0().bits(0b11));
         gpioa
             .cfghr
-            .modify(|_, w| w.cnf9().bits(0b10).mode9().bits(0b11).cnf10().bits(0b10).mode10().bits(0b11));
+            .modify(|_, w| w.cnf9().bits(0b10).mode9().bits(0b11).cnf10().bits(0b10).mode10().bits(0b00));
         gpiob
             .cfglr
             .modify(|_, w| w.cnf5().bits(0b00).mode5().bits(0b11).cnf6().bits(0b00).mode6().bits(0b11).cnf7().bits(0b00).mode7().bits(0b11));
@@ -74,6 +96,28 @@ fn main() -> ! {
     let serial = log::Serial::new(peripherals.USART1);
     log::set_logger(serial);
     println!("The meaning of life is to rewrite everything in Rust. 🦀🦀");
+
+    match riscv::register::misa::read() {
+        None => { println!("ISA unknown"); },
+        Some(v) => { println!("ISA: {:?}", v); },
+    }
+
+    match riscv::register::mvendorid::read() {
+        None => { println!("vendor unknown"); },
+        Some(v) => { println!("vendor: {:?}", v); },
+    }
+
+    match riscv::register::mimpid::read() {
+        None => { println!("impl. ID unknown"); },
+        Some(v) => { println!("impl. ID: {:?}", v); },
+    }
+
+    unsafe {
+        riscv::interrupt::enable();
+        riscv::register::mie::set_mext();
+        riscv::register::mie::set_uext();
+        riscv::register::mip::set_uext();
+    }
 
     // println!("Hello, world!");
     // HSI 8MHz
