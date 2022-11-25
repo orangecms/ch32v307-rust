@@ -7,7 +7,6 @@ use core::{
     panic::PanicInfo,
     ptr::{slice_from_raw_parts, write_volatile},
 };
-use embedded_hal::serial::nb::Write;
 use panic_halt as _;
 // riscv provides implementation for critical-section
 use riscv as _;
