@@ -7,12 +7,15 @@ use core::{
     panic::PanicInfo,
     ptr::{slice_from_raw_parts, write_volatile},
 };
-// use embedded_hal::serial::nb::Write;
+use embedded_hal::serial::nb::Write;
 use panic_halt as _;
 // riscv provides implementation for critical-section
 use riscv as _;
 
 use ch32v3::ch32v30x;
+
+#[macro_use]
+mod log;
 
 #[no_mangle]
 extern "C" fn DefaultHandler() {}
@@ -109,6 +112,7 @@ fn main() -> ! {
         while uart1.statr.read().txe() != true {}
         uart1.datar.modify(|_, w| w.bits('\n' as u32));
     }
+    let serial = log::Serial::new(uart1);
 
     // println!("Hello, world!");
     // HSI 8MHz
