@@ -72,8 +72,8 @@ fn where_am_i() {
     println!("Where am I? {}", mpc);
     // let spc = riscv::register::sepc::read();
     // println!("Where is she? {:x}", spc);
-    let upc = riscv::register::uepc::read();
-    println!("Where are you? {}", upc);
+    // let upc = riscv::register::uepc::read();
+    // println!("Where are you? {}", upc);
 }
 
 #[entry]
@@ -138,6 +138,7 @@ fn main() -> ! {
     // 4 opcodes to do a nop sleep here
     let cycle = 8_000_000 / 4;
     loop {
+        // where_am_i();
         gpiob.outdr.modify(|_, w| w.odr5().set_bit());
         gpiob.outdr.modify(|_, w| w.odr7().set_bit());
         sleep(cycle);
