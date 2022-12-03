@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use riscv_rt::{entry, interrupt};
+use riscv_rt::entry;
 use core::{
     arch::asm,
     panic::PanicInfo,
@@ -11,7 +11,7 @@ use panic_halt as _;
 // riscv provides implementation for critical-section
 use riscv as _;
 
-use ch32v3::ch32v30x;
+use ch32v3::{ch32v30x, ch32v30x::Interrupt::USART1};
 
 #[macro_use]
 mod log;
@@ -47,6 +47,10 @@ fn sleep(t: i32) {
             riscv::asm::nop();
         }
     }
+}
+
+fn echo() {
+    print!("x");
 }
 
 /* see https://five-embeddev.com/riscv-isa-manual/latest/machine.html */
@@ -120,6 +124,8 @@ fn main() -> ! {
 
     gpioa.outdr.modify(|_, w| w.odr0().set_bit());
 
+    ch32v3::interrupt!(USART1, echo);
+
     let serial = log::Serial::new(peripherals.USART1);
     log::set_logger(serial);
     println!("The meaning of life is to rewrite everything in Rust. 🦀🦀");
@@ -137,8 +143,13 @@ fn main() -> ! {
     // HSI 8MHz
     // 4 opcodes to do a nop sleep here
     let cycle = 8_000_000 / 4;
+    use core::fmt;
+    use fmt::Write;
     loop {
-        // where_am_i();
+        let x = log::read();
+        println!("{}", x as char);
+
+        where_am_i();
         gpiob.outdr.modify(|_, w| w.odr5().set_bit());
         gpiob.outdr.modify(|_, w| w.odr7().set_bit());
         sleep(cycle);

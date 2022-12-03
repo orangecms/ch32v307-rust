@@ -46,6 +46,20 @@ impl embedded_hal::serial::ErrorType for Serial {
     type Error = Error;
 }
 
+impl embedded_hal::serial::nb::Read<u8> for Serial {
+    fn read(&mut self) -> nb::Result<u8, self::Error> {
+        /*
+        if self.uart.statr.read().txe() != true {
+            return Err(nb::Error::WouldBlock);
+        }
+        */
+        unsafe {
+            // while self.uart.statr.read().txe() != true {}
+            Ok(self.uart.datar.read().bits() as u8)
+        }
+    }
+}
+
 impl embedded_hal::serial::nb::Write<u8> for Serial {
     fn write(&mut self, c: u8) -> nb::Result<(), self::Error> {
         /*
@@ -113,6 +127,15 @@ pub fn _print(args: fmt::Arguments) {
         match &mut LOGGER {
             Some(l) => l.inner.write_fmt(args).unwrap(),
             _ => {}
+        }
+    }
+}
+
+pub fn read() -> u8 {
+    unsafe {
+        match &mut LOGGER {
+            Some(l) => l.inner.0.uart.datar.read().bits() as u8,
+            _ => 0
         }
     }
 }

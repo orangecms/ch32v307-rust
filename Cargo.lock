@@ -32,8 +32,6 @@ checksum = "dcb6dd1c2376d2e096796e234a70e17e94cc2d5d54ff8ce42b28cef1d0d359a4"
 [[package]]
 name = "ch32v3"
 version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c060e506162a020715423ef9f1d4c8a7a052ec89c4ce4b3f4ceed5335b627070"
 dependencies = [
  "critical-section",
  "riscv 0.9.0",

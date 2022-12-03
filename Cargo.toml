@@ -19,6 +19,7 @@ spin = "0.9"
 
 [dependencies.ch32v3]
 version = "0.1.5"
+path = "../ch32-rs-nightlies/ch32v3"
 features = ["ch32v30x", "critical-section"]
 
 [features]
