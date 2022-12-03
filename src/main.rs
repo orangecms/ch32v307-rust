@@ -2,16 +2,11 @@
 #![no_main]
 
 use riscv_rt::entry;
-use core::{
-    arch::asm,
-    panic::PanicInfo,
-    ptr::{slice_from_raw_parts, write_volatile},
-};
 use panic_halt as _;
 // riscv provides implementation for critical-section
 use riscv as _;
 
-use ch32v3::{ch32v30x, ch32v30x::Interrupt::USART1};
+use ch32v3::ch32v30x;
 
 #[macro_use]
 mod log;
@@ -147,7 +142,6 @@ fn main() -> ! {
     };
 
     gpioa.outdr.modify(|_, w| w.odr0().set_bit());
-
     ch32v3::interrupt!(USART1, echo);
 
     let serial = log::Serial::new(peripherals.USART1);
@@ -164,15 +158,20 @@ fn main() -> ! {
     }
 
     println!("Type something!");
-    use core::fmt;
-    use fmt::Write;
+    let mut inp: u8 = 0;
     loop {
         let x = log::read();
         if x != 0 {
-            print!("{}", x as char);
             if x as char == '\r' {
-                println!();
+                if inp as char == 'r' {
+                    println!(" 🦀");
+                } else {
+                    println!(" 🐢");
+                }
+            } else {
+                print!("{}", x as char);
             }
+            inp = x;
         }
         // where_am_i();
         // blink(gpiob);

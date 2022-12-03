@@ -53,9 +53,7 @@ impl embedded_hal::serial::nb::Read<u8> for Serial {
         if self.uart.statr.read().rxne() != true {
             return Err(nb::Error::WouldBlock);
         }
-        unsafe {
-            Ok(self.uart.datar.read().bits() as u8)
-        }
+        Ok(self.uart.datar.read().bits() as u8)
     }
 }
 
@@ -73,8 +71,7 @@ impl embedded_hal::serial::nb::Write<u8> for Serial {
     #[inline]
     fn flush(&mut self) -> nb::Result<(), self::Error> {
         // TODO
-        let TFE_EMPTY = true;
-        if TFE_EMPTY {
+        if true {
             Ok(())
         } else {
             Err(nb::Error::WouldBlock)
