@@ -69,7 +69,7 @@ impl embedded_hal::serial::nb::Write<u8> for Serial {
         */
         unsafe {
             while self.uart.statr.read().txe() != true {}
-            self.uart.datar.modify(|_, w| w.bits(c as u32));
+            self.uart.datar.write(|w| w.bits(c as u32));
         }
         Ok(())
     }
@@ -134,7 +134,15 @@ pub fn _print(args: fmt::Arguments) {
 pub fn read() -> u8 {
     unsafe {
         match &mut LOGGER {
-            Some(l) => l.inner.0.uart.datar.read().bits() as u8,
+            Some(l) => {
+                if l.inner.0.uart.statr.read().rxne().bit_is_set() {
+                    let c = l.inner.0.uart.datar.read().bits() as u8;
+                    // l.inner.0.uart.datar.write(|w| w.bits(0 as u32));
+                    l.inner.0.uart.statr.write(|w| w.rxne().clear_bit());
+                    return c;
+                }
+                0
+            },
             _ => 0
         }
     }

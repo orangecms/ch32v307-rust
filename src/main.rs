@@ -80,6 +80,30 @@ fn where_am_i() {
     // println!("Where are you? {}", upc);
 }
 
+// HSI 8MHz
+// 4 opcodes to do a nop sleep here
+const CYCLE: i32 = 8_000_000 / 4;
+
+fn blink(gpiob: &ch32v3::ch32v30x::GPIOB) {
+    gpiob.outdr.modify(|_, w| w.odr5().set_bit());
+    gpiob.outdr.modify(|_, w| w.odr7().set_bit());
+    sleep(CYCLE);
+    gpiob.outdr.modify(|_, w| w.odr6().set_bit());
+    gpiob.outdr.modify(|_, w| w.odr8().set_bit());
+    sleep(CYCLE);
+    gpiob.outdr.modify(|_, w| w.odr9().set_bit());
+    sleep(CYCLE);
+
+    gpiob.outdr.modify(|_, w| w.odr5().clear_bit());
+    gpiob.outdr.modify(|_, w| w.odr7().clear_bit());
+    sleep(CYCLE);
+    gpiob.outdr.modify(|_, w| w.odr6().clear_bit());
+    gpiob.outdr.modify(|_, w| w.odr8().clear_bit());
+    sleep(CYCLE);
+    gpiob.outdr.modify(|_, w| w.odr9().clear_bit());
+    sleep(CYCLE);
+}
+
 #[entry]
 fn main() -> ! {
     let peripherals = ch32v30x::Peripherals::take().unwrap();
@@ -139,34 +163,19 @@ fn main() -> ! {
         riscv::register::mip::set_usoft();
     }
 
-    // println!("Hello, world!");
-    // HSI 8MHz
-    // 4 opcodes to do a nop sleep here
-    let cycle = 8_000_000 / 4;
+    println!("Type something!");
     use core::fmt;
     use fmt::Write;
     loop {
         let x = log::read();
-        println!("{}", x as char);
-
-        where_am_i();
-        gpiob.outdr.modify(|_, w| w.odr5().set_bit());
-        gpiob.outdr.modify(|_, w| w.odr7().set_bit());
-        sleep(cycle);
-        gpiob.outdr.modify(|_, w| w.odr6().set_bit());
-        gpiob.outdr.modify(|_, w| w.odr8().set_bit());
-        sleep(cycle);
-        gpiob.outdr.modify(|_, w| w.odr9().set_bit());
-        sleep(cycle);
-
-        gpiob.outdr.modify(|_, w| w.odr5().clear_bit());
-        gpiob.outdr.modify(|_, w| w.odr7().clear_bit());
-        sleep(cycle);
-        gpiob.outdr.modify(|_, w| w.odr6().clear_bit());
-        gpiob.outdr.modify(|_, w| w.odr8().clear_bit());
-        sleep(cycle);
-        gpiob.outdr.modify(|_, w| w.odr9().clear_bit());
-        sleep(cycle);
+        if x != 0 {
+            print!("{}", x as char);
+            if x as char == '\r' {
+                println!();
+            }
+        }
+        // where_am_i();
+        // blink(gpiob);
     }
 }
 /*
