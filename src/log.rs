@@ -28,14 +28,16 @@ impl embedded_hal::serial::Error for Error {
 impl Serial {
     #[inline]
     pub fn new(uart: ch32v3::ch32v30x::USART1) -> Self {
-        // 12 bits mantissa, last 4 bits are fraction (1/16)
+        // enable this UART, set word length (m) to 8 bits
         uart.ctlr1.modify(|_, w| w.ue().set_bit().m().clear_bit());
-        // enable transmitter and receiver
-        uart.ctlr1.modify(|_, w| w.te().set_bit());
-        // enable interrupts for receiver (RX non-empty)
+        // enable transmitter and its interrupt (TX empty)
+        uart.ctlr1.modify(|_, w| w.te().set_bit().txeie().set_bit());
+        // enable receiver and its interrupt (RX non-empty)
         uart.ctlr1.modify(|_, w| w.re().set_bit().rxneie().set_bit());
         unsafe {
+            // 1 stop bit
             uart.ctlr2.modify(|_, w| w.stop().bits(0b00));
+            // 12 bits mantissa, last 4 bits are fraction (1/16)
             uart.brr.modify(|_, w| w.div_mantissa().bits(39).div_fraction().bits(1));
         }
         Self { uart }
@@ -48,13 +50,10 @@ impl embedded_hal::serial::ErrorType for Serial {
 
 impl embedded_hal::serial::nb::Read<u8> for Serial {
     fn read(&mut self) -> nb::Result<u8, self::Error> {
-        /*
-        if self.uart.statr.read().txe() != true {
+        if self.uart.statr.read().rxne() != true {
             return Err(nb::Error::WouldBlock);
         }
-        */
         unsafe {
-            // while self.uart.statr.read().txe() != true {}
             Ok(self.uart.datar.read().bits() as u8)
         }
     }
@@ -62,13 +61,10 @@ impl embedded_hal::serial::nb::Read<u8> for Serial {
 
 impl embedded_hal::serial::nb::Write<u8> for Serial {
     fn write(&mut self, c: u8) -> nb::Result<(), self::Error> {
-        /*
         if self.uart.statr.read().txe() != true {
             return Err(nb::Error::WouldBlock);
         }
-        */
         unsafe {
-            while self.uart.statr.read().txe() != true {}
             self.uart.datar.write(|w| w.bits(c as u32));
         }
         Ok(())
