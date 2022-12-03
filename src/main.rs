@@ -44,7 +44,8 @@ fn sleep(t: i32) {
     }
 }
 
-fn echo() {
+#[no_mangle]
+pub fn echo() {
     print!("x");
 }
 
@@ -142,10 +143,11 @@ fn main() -> ! {
     };
 
     gpioa.outdr.modify(|_, w| w.odr0().set_bit());
-    ch32v3::interrupt!(USART1, echo);
 
     let serial = log::Serial::new(peripherals.USART1);
     log::set_logger(serial);
+    ch32v3::interrupt!(USART1, echo);
+
     println!("The meaning of life is to rewrite everything in Rust. 🦀🦀");
 
     machine_info();
@@ -162,14 +164,23 @@ fn main() -> ! {
     loop {
         let x = log::read();
         if x != 0 {
-            if x as char == '\r' {
-                if inp as char == 'r' {
-                    println!(" 🦀");
-                } else {
-                    println!(" 🐢");
-                }
-            } else {
-                print!("{}", x as char);
+            match (x as char, x) {
+                ('\r', _) => {
+                    if inp as char == 'r' {
+                        println!(" 🦀");
+                    } else {
+                        println!(" 🐢");
+                    }
+                },
+                (_x, 0x08) => {
+                    print!("{_x}{_x}🩹");
+                },
+                ('w', _) => {
+                    print!("🧇");
+                },
+                (_x, _) => {
+                    print!("{}", _x);
+                },
             }
             inp = x;
         }
