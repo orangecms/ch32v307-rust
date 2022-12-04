@@ -4,11 +4,12 @@ OPENOCD_CFG := ./wch-riscv.cfg
 OPENOCD := /home/dama/firmware/WCH/MRS_Toolchain_Linux_x64_V1.60/OpenOCD/bin/openocd
 OPENOCD_CMD := $(OPENOCD) -f $(OPENOCD_CFG) -c init
 TARGET := target/riscv32imac-unknown-none-elf/release/ch32v307-test
+FEATURES := ''
 
 all: build flash
 
 build:
-	cargo build --release
+	cargo build --release --features $(FEATURES)
 
 # Program
 flash: erase $(TARGET)

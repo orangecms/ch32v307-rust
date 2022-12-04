@@ -31,7 +31,7 @@ impl Serial {
         // enable this UART, set word length (m) to 8 bits
         uart.ctlr1.modify(|_, w| w.ue().set_bit().m().clear_bit());
         // enable transmitter and its interrupt (TX empty)
-        uart.ctlr1.modify(|_, w| w.te().set_bit().txeie().set_bit());
+        uart.ctlr1.modify(|_, w| w.te().set_bit()/*.txeie().set_bit()*/);
         // enable receiver and its interrupt (RX non-empty)
         uart.ctlr1.modify(|_, w| w.re().set_bit().rxneie().set_bit());
         unsafe {
