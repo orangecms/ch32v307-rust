@@ -66,7 +66,7 @@ fn stk_handler() {
     // stk.sr.modify(|_, w| w.cntif().clear_bit());
     unsafe {
         TT = !TT;
-        let tt = if TT { "tick" } else { "tock" };
+        let tt = if TT { "🕰️ tick" } else { "🕰️ tock" };
         println!("{tt}");
     }
 }
@@ -231,7 +231,7 @@ fn main() -> ! {
     machine_info();
 
     println!("\nThe meaning of life is to rewrite everything in Rust. 🦀🦀");
-    println!("Type something!\n");
+    println!("Without love, breath is just a clock ticking. Type something!\n");
  
     let mut inp: u8 = 0;
     loop {
