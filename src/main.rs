@@ -30,43 +30,43 @@ fn usoft_handler() {
 #[cfg(feature = "int")]
 // custom default handler
 #[export_name = "DefaultHandler"]
-fn default_handler(irqn: i16) {
-    // systick timer
-    if irqn == 12 {
-        unsafe {
-            // println!("{:x}", riscv::register::mip::read().bits());
-            XX = !XX;
-            // stay in machine mode after interrupt handling, see also
-            // https://github.com/rust-embedded/riscv-rt/pull/42/files
-            riscv::register::mstatus::set_mpp(
-                riscv::register::mstatus::MPP::Machine
-            );
-            asm!("mret");
-        }
-        // TODO: How do we clear the interrupts?!
-        // return;
-    }
-    // usart1
-    if irqn == 53 {
-        echo();
-        return;
-    }
+fn default_handler() {
     let mstatus = riscv::register::mstatus::read();
     let mcause = riscv::register::mcause::read();
     let mtval = riscv::register::mtval::read();
     let cause = mcause.cause();
     let code = mcause.code();
-    let itype = if mcause.is_interrupt() { "interrupt" } else { "exception" };
-    println!("Interrupt IRQ {}, status {:?} tval {:x}", irqn, mstatus, mtval);
-    println!("Interrupt code {} cause {:?} type {itype}", code, cause);
-    where_am_i();
+    let irqn = code;
+    match irqn {
+        // systick timer (stk)
+        12 => {
+            stk_handler();
+        },
+        // usart1
+        53 => {
+            let to_the_rescue = unsafe { &*ch32v30x::USART1::PTR };
+            to_the_rescue.statr.modify(|_, w| w.rxne().clear_bit());
+            echo();
+        },
+        _ => {
+            let itype = if mcause.is_interrupt() { "interrupt" } else { "exception" };
+            println!("Interrupt IRQ {}, status {:?} tval {:x}", irqn, mstatus, mtval);
+            println!("Interrupt code {} cause {:?} type {itype}", code, cause);
+            where_am_i();
+        }
+    }
 }
 
 #[no_mangle]
 fn stk_handler() {
-    print!("stk");
+    let stk = unsafe { &*ch32v30x::SYSTICK::PTR };
+    stk.sr.reset();
+    // stk.sr.modify(|_, w| w.cntif().clear_bit());
     unsafe {
-        XX = true;
+        XX = !XX;
+
+        let tt = if XX { "tick" } else { "tock" };
+        println!("{tt}");
     }
 }
 
@@ -238,19 +238,18 @@ fn main() -> ! {
     unsafe {
         let exti = peripherals.EXTI;
         exti.intenr.modify(|_, w| w.bits(0xffff));
-        exti.evenr.modify(|_, w| w.bits(0xffff));
+        // exti.evenr.modify(|_, w| w.bits(0xffff));
         exti.rtenr.write(|w| w.bits(0xffff));
         exti.ftenr.write(|w| w.bits(0xffff));
-        exti.swievr.write(|w| w.bits(0xffff));
+        // exti.swievr.write(|w| w.bits(0xffff));
 
+        // interrupt 53 is USART1
         let pfic = peripherals.PFIC;
         pfic.ienr1.write(|w| w.bits(0xffff));
         // triggers when RISC-V interrupts enabled
         // - interrupt 39 aka EXTI9_5 (EXTI Line\[9:5\])
         // pfic.ienr2.write(|w| w.bits(0x0080));
-        // interrupt 37, USART1
-        pfic.ienr2.write(|w| w.bits((37 - 32) << 1));
-        // pfic.ienr2.write(|w| w.bits(0xffff));
+        pfic.ienr2.write(|w| w.bits(0xff7f));
         pfic.ienr3.write(|w| w.bits(0xffff));
         pfic.ienr4.write(|w| w.bits(0xffff));
     }
@@ -279,17 +278,13 @@ fn main() -> ! {
     println!("Type something!");
     let mut inp: u8 = 0;
     loop {
-        let v = stk.cntl.read().bits();
-        if v > 0x0100_0100 {
-            gpiob.outdr.modify(|_, w| w.odr9().set_bit());
-        } else {
-            gpiob.outdr.modify(|_, w| w.odr9().clear_bit());
+        unsafe {
+            if XX {
+                gpiob.outdr.modify(|_, w| w.odr9().set_bit());
+            } else {
+                gpiob.outdr.modify(|_, w| w.odr9().clear_bit());
+            }
         }
-        /*
-        if (v >> 2) % 0x0008_0000 == 0 {
-            println!("it's the final ... {}", v);
-        }
-        */
         // FIXME: we want interrupts...
         let x = log::read();
         if x != 0 {
@@ -313,13 +308,6 @@ fn main() -> ! {
             }
             inp = x;
         }
-        unsafe {
-            if XX {
-                where_am_i();
-                XX = false;
-            }
-        }
-        // blink(gpiob);
     }
 }
 /*
