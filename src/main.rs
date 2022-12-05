@@ -57,35 +57,23 @@ fn default_handler() {
     }
 }
 
+static mut TT: bool = false;
+
 #[no_mangle]
 fn stk_handler() {
     let stk = unsafe { &*ch32v30x::SYSTICK::PTR };
     stk.sr.reset();
     // stk.sr.modify(|_, w| w.cntif().clear_bit());
     unsafe {
-        XX = !XX;
-
-        let tt = if XX { "tick" } else { "tock" };
+        TT = !TT;
+        let tt = if TT { "tick" } else { "tock" };
         println!("{tt}");
     }
 }
 
-fn sleep(t: i32) {
-    for _ in 0..t {
-        unsafe {
-            riscv::asm::nop();
-        }
-    }
-}
-
-static mut XX: bool = false;
-
 #[no_mangle]
 fn echo() {
     print!("echo");
-    unsafe {
-        XX = true;
-    }
 }
 
 const RISCV_BANNER: &str = r"
@@ -98,11 +86,6 @@ const RISCV_BANNER: &str = r"
 
 /* see https://five-embeddev.com/riscv-isa-manual/latest/machine.html */
 fn machine_info() {
-    match riscv::register::misa::read() {
-        None => { println!("ISA unknown"); },
-        Some(v) => { println!("ISA: {:?}", v); },
-    }
-
     match riscv::register::mvendorid::read() {
         None => { println!("vendor unknown"); },
         Some(v) => { println!("vendor: {:?}", v); },
@@ -111,6 +94,11 @@ fn machine_info() {
     match riscv::register::mimpid::read() {
         None => { println!("impl. ID unknown"); },
         Some(v) => { println!("impl. ID: {:?}", v); },
+    }
+
+    match riscv::register::misa::read() {
+        None => { println!("ISA unknown"); },
+        Some(v) => { println!("ISA: {:?}", v); },
     }
 }
 
@@ -121,30 +109,6 @@ fn where_am_i() {
     // println!("Where is she? {:x}", spc);
     // let upc = riscv::register::uepc::read();
     // println!("Where are you? {}", upc);
-}
-
-// HSI 8MHz
-// 4 opcodes to do a nop sleep here
-const CYCLE: i32 = 8_000_000 / 4;
-
-fn blink(gpiob: &ch32v3::ch32v30x::GPIOB) {
-    gpiob.outdr.modify(|_, w| w.odr5().set_bit());
-    gpiob.outdr.modify(|_, w| w.odr7().set_bit());
-    sleep(CYCLE);
-    gpiob.outdr.modify(|_, w| w.odr6().set_bit());
-    gpiob.outdr.modify(|_, w| w.odr8().set_bit());
-    sleep(CYCLE);
-    gpiob.outdr.modify(|_, w| w.odr9().set_bit());
-    sleep(CYCLE);
-
-    gpiob.outdr.modify(|_, w| w.odr5().clear_bit());
-    gpiob.outdr.modify(|_, w| w.odr7().clear_bit());
-    sleep(CYCLE);
-    gpiob.outdr.modify(|_, w| w.odr6().clear_bit());
-    gpiob.outdr.modify(|_, w| w.odr8().clear_bit());
-    sleep(CYCLE);
-    gpiob.outdr.modify(|_, w| w.odr9().clear_bit());
-    sleep(CYCLE);
 }
 
 #[entry]
@@ -180,22 +144,15 @@ fn main() -> ! {
     let afio = &peripherals.AFIO;
 
     unsafe {
-        gpioa.cfglr.modify(|_, w| w.cnf0().bits(0b00).mode0().bits(0b11));
         // confire A9/A10 for UART TX/RX
         gpioa
             .cfghr
             .modify(|_, w| w.cnf9().bits(0b10).mode9().bits(0b11)
                             .cnf10().bits(0b10).mode10().bits(0b00));
+        // configure B5 for output
         gpiob
             .cfglr
-            .modify(|_, w| w.cnf5().bits(0b00).mode5().bits(0b11)
-                            .cnf6().bits(0b00).mode6().bits(0b11)
-                            .cnf7().bits(0b00).mode7().bits(0b11));
-        gpiob
-            .cfghr
-            .modify(|_, w| w.cnf8().bits(0b00).mode8().bits(0b11)
-                            .cnf9().bits(0b00).mode9().bits(0b11)
-            );
+            .modify(|_, w| w.cnf5().bits(0b00).mode5().bits(0b11));
 
         // enable event output
         afio.ecr.modify(|_, w| w.evoe().set_bit());
@@ -254,6 +211,11 @@ fn main() -> ! {
         pfic.ienr4.write(|w| w.bits(0xffff));
     }
 
+    // do this early to prevent a premature counter interrupt
+    unsafe {
+        riscv::interrupt::enable();
+    }
+
     // count count
     let stk = &peripherals.SYSTICK;
     stk.ctlr.modify(|_, w| w.stre().set_bit() // auto reset
@@ -266,23 +228,18 @@ fn main() -> ! {
     }
 
     println!("{RISCV_BANNER}");
-    println!("The meaning of life is to rewrite everything in Rust. 🦀🦀");
-
     machine_info();
-    where_am_i();
-    unsafe {
-        riscv::interrupt::enable();
-        riscv::register::mie::set_usoft();
-        riscv::register::mip::set_usoft();
-    }
-    println!("Type something!");
+
+    println!("\nThe meaning of life is to rewrite everything in Rust. 🦀🦀");
+    println!("Type something!\n");
+ 
     let mut inp: u8 = 0;
     loop {
         unsafe {
-            if XX {
-                gpiob.outdr.modify(|_, w| w.odr9().set_bit());
+            if TT {
+                gpiob.outdr.modify(|_, w| w.odr5().set_bit());
             } else {
-                gpiob.outdr.modify(|_, w| w.odr9().clear_bit());
+                gpiob.outdr.modify(|_, w| w.odr5().clear_bit());
             }
         }
         // FIXME: we want interrupts...
