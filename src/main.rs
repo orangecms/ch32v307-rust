@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 
+use core::arch::asm;
 use riscv_rt::entry;
 use panic_halt as _;
 // riscv provides implementation for critical-section
@@ -30,6 +31,26 @@ fn usoft_handler() {
 // custom default handler
 #[export_name = "DefaultHandler"]
 fn default_handler(irqn: i16) {
+    // systick timer
+    if irqn == 12 {
+        unsafe {
+            // println!("{:x}", riscv::register::mip::read().bits());
+            XX = !XX;
+            // stay in machine mode after interrupt handling, see also
+            // https://github.com/rust-embedded/riscv-rt/pull/42/files
+            riscv::register::mstatus::set_mpp(
+                riscv::register::mstatus::MPP::Machine
+            );
+            asm!("mret");
+        }
+        // TODO: How do we clear the interrupts?!
+        // return;
+    }
+    // usart1
+    if irqn == 53 {
+        echo();
+        return;
+    }
     let mstatus = riscv::register::mstatus::read();
     let mcause = riscv::register::mcause::read();
     let mtval = riscv::register::mtval::read();
@@ -39,6 +60,14 @@ fn default_handler(irqn: i16) {
     println!("Interrupt IRQ {}, status {:?} tval {:x}", irqn, mstatus, mtval);
     println!("Interrupt code {} cause {:?} type {itype}", code, cause);
     where_am_i();
+}
+
+#[no_mangle]
+fn stk_handler() {
+    print!("stk");
+    unsafe {
+        XX = true;
+    }
 }
 
 fn sleep(t: i32) {
@@ -52,7 +81,7 @@ fn sleep(t: i32) {
 static mut XX: bool = false;
 
 #[no_mangle]
-pub fn echo() {
+fn echo() {
     print!("echo");
     unsafe {
         XX = true;
@@ -178,7 +207,7 @@ fn main() -> ! {
     let serial = log::Serial::new(peripherals.USART1);
     log::set_logger(serial);
     ch32v3::interrupt!(USART1, echo);
-    // ch32v3::interrupt!(STK, echo);
+    ch32v3::interrupt!(STK, stk_handler);
 
     /*
      * Steps to use external hardware interrupt:
@@ -221,7 +250,7 @@ fn main() -> ! {
         // pfic.ienr2.write(|w| w.bits(0x0080));
         // interrupt 37, USART1
         pfic.ienr2.write(|w| w.bits((37 - 32) << 1));
-        pfic.ienr2.write(|w| w.bits(0xffff));
+        // pfic.ienr2.write(|w| w.bits(0xffff));
         pfic.ienr3.write(|w| w.bits(0xffff));
         pfic.ienr4.write(|w| w.bits(0xffff));
     }
@@ -243,7 +272,7 @@ fn main() -> ! {
     machine_info();
     where_am_i();
     unsafe {
-        // riscv::interrupt::enable();
+        riscv::interrupt::enable();
         riscv::register::mie::set_usoft();
         riscv::register::mip::set_usoft();
     }
