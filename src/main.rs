@@ -66,8 +66,8 @@ fn stk_handler() {
     // stk.sr.modify(|_, w| w.cntif().clear_bit());
     unsafe {
         TT = !TT;
-        let tt = if TT { "🕰️ tick" } else { "🕰️ tock" };
-        println!("{tt}");
+        let tt = if TT { "🕰️  tick" } else { "🕰️  tock" };
+        print!("\r{tt}");
     }
 }
 
