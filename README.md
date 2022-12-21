@@ -11,3 +11,4 @@ This is work in progress, not usable yet. Help is welcome!
 - <https://github.com/kprasadvnsi/riscv-openocd-wch> (OpenOCD for WCH source dump)
   NOTE: I could compile this, but got USB errors; vendor binary works so far
 - <http://mounriver.com/download> precompiled toolchain & OpenOCD download
+- <https://blog.imi.moe/freertos-on-ch32v307/> (nice writeup with lots of details on the platform)
