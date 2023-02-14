@@ -31,14 +31,17 @@ impl Serial {
         // enable this UART, set word length (m) to 8 bits
         uart.ctlr1.modify(|_, w| w.ue().set_bit().m().clear_bit());
         // enable transmitter and disable its interrupt (TX empty)
-        uart.ctlr1.modify(|_, w| w.te().set_bit().txeie().clear_bit());
+        uart.ctlr1
+            .modify(|_, w| w.te().set_bit().txeie().clear_bit());
         // enable receiver and its interrupt (RX non-empty)
-        uart.ctlr1.modify(|_, w| w.re().set_bit().rxneie().set_bit());
+        uart.ctlr1
+            .modify(|_, w| w.re().set_bit().rxneie().set_bit());
         unsafe {
             // 1 stop bit
             uart.ctlr2.modify(|_, w| w.stop().bits(0b00));
             // 12 bits mantissa, last 4 bits are fraction (1/16)
-            uart.brr.modify(|_, w| w.div_mantissa().bits(39).div_fraction().bits(1));
+            uart.brr
+                .modify(|_, w| w.div_mantissa().bits(39).div_fraction().bits(1));
         }
         Self { uart }
     }
@@ -95,8 +98,12 @@ pub(crate) struct Logger {
 impl fmt::Write for S {
     #[inline]
     fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
-        for byte in s.as_bytes() {
-            block!(self.0.write(*byte)).unwrap();
+        for &byte in s.as_bytes() {
+            // Inject a carriage return before a newline
+            if byte == b'\n' {
+                block!(self.write(b'\r')).unwrap();
+            }
+            block!(self.0.write(byte)).unwrap();
         }
         block!(self.0.flush()).unwrap();
         Ok(())
@@ -135,8 +142,8 @@ pub fn read() -> u8 {
                     return c;
                 }
                 0
-            },
-            _ => 0
+            }
+            _ => 0,
         }
     }
 }

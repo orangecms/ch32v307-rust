@@ -2,8 +2,8 @@
 #![no_main]
 
 use core::arch::asm;
-use riscv_rt::entry;
 use panic_halt as _;
+use riscv_rt::entry;
 // riscv provides implementation for critical-section
 use riscv::{self as _, register::mstatus::Mstatus};
 
@@ -41,16 +41,23 @@ fn default_handler() {
         // systick timer (stk)
         12 => {
             stk_handler();
-        },
+        }
         // usart1
         53 => {
             let to_the_rescue = unsafe { &*ch32v30x::USART1::PTR };
             to_the_rescue.statr.modify(|_, w| w.rxne().clear_bit());
             echo();
-        },
+        }
         _ => {
-            let itype = if mcause.is_interrupt() { "interrupt" } else { "exception" };
-            println!("Interrupt IRQ {}, status {:?} tval {:x}", irqn, mstatus, mtval);
+            let itype = if mcause.is_interrupt() {
+                "interrupt"
+            } else {
+                "exception"
+            };
+            println!(
+                "Interrupt IRQ {}, status {:?} tval {:x}",
+                irqn, mstatus, mtval
+            );
             println!("Interrupt code {} cause {:?} type {itype}", code, cause);
             where_am_i();
         }
@@ -87,18 +94,30 @@ const RISCV_BANNER: &str = r"
 /* see https://five-embeddev.com/riscv-isa-manual/latest/machine.html */
 fn machine_info() {
     match riscv::register::mvendorid::read() {
-        None => { println!("vendor unknown"); },
-        Some(v) => { println!("vendor: {:?}", v); },
+        None => {
+            println!("vendor unknown");
+        }
+        Some(v) => {
+            println!("vendor: {:?}", v);
+        }
     }
 
     match riscv::register::mimpid::read() {
-        None => { println!("impl. ID unknown"); },
-        Some(v) => { println!("impl. ID: {:?}", v); },
+        None => {
+            println!("impl. ID unknown");
+        }
+        Some(v) => {
+            println!("impl. ID: {:?}", v);
+        }
     }
 
     match riscv::register::misa::read() {
-        None => { println!("ISA unknown"); },
-        Some(v) => { println!("ISA: {:?}", v); },
+        None => {
+            println!("ISA unknown");
+        }
+        Some(v) => {
+            println!("ISA: {:?}", v);
+        }
     }
 }
 
@@ -116,8 +135,10 @@ fn main() -> ! {
     let peripherals = ch32v30x::Peripherals::take().unwrap();
 
     let rcc = peripherals.RCC;
-    rcc.ctlr.modify(|_, w| w.pllon().set_bit().pll2on().set_bit());
-    rcc.ctlr.modify(|_, w| w.csson().set_bit().hseon().clear_bit());
+    rcc.ctlr
+        .modify(|_, w| w.pllon().set_bit().pll2on().set_bit());
+    rcc.ctlr
+        .modify(|_, w| w.csson().set_bit().hseon().clear_bit());
     rcc.ctlr.modify(|_, w| w.hseon().set_bit());
     while rcc.ctlr.read().hserdy() != true {}
 
@@ -126,17 +147,18 @@ fn main() -> ! {
 
     unsafe {
         rcc.cfgr0.modify(|_, w| w.ppre1().bits(0b100));
-        rcc.cfgr0.modify(|_, w| w.pllsrc().set_bit().pllxtpre().set_bit());
+        rcc.cfgr0
+            .modify(|_, w| w.pllsrc().set_bit().pllxtpre().set_bit());
         // PLLMUL 0b0111 means 9x 8MHz = 72MHz
-        rcc.cfgr0.modify(|_, w| w.mco().bits(0b1000).pllmul().bits(0b0111));
+        rcc.cfgr0
+            .modify(|_, w| w.mco().bits(0b1000).pllmul().bits(0b0111));
         // use PLL oscillator as system clock
         rcc.cfgr0.modify(|_, w| w.sw().bits(0b10));
     }
 
     // enable IO ports A and B, as well as UART1
-    rcc.apb2pcenr.modify(|_, w| w.iopaen().set_bit()
-                                 .iopben().set_bit()
-                                 .usart1en().set_bit());
+    rcc.apb2pcenr
+        .modify(|_, w| w.iopaen().set_bit().iopben().set_bit().usart1en().set_bit());
 
     // configure GPIOs
     let gpioa = &peripherals.GPIOA;
@@ -145,10 +167,16 @@ fn main() -> ! {
 
     unsafe {
         // confire A9/A10 for UART TX/RX
-        gpioa
-            .cfghr
-            .modify(|_, w| w.cnf9().bits(0b10).mode9().bits(0b11)
-                            .cnf10().bits(0b10).mode10().bits(0b00));
+        gpioa.cfghr.modify(|_, w| {
+            w.cnf9()
+                .bits(0b10)
+                .mode9()
+                .bits(0b11)
+                .cnf10()
+                .bits(0b10)
+                .mode10()
+                .bits(0b00)
+        });
         // configure B5 for output
         gpiob
             .cfglr
@@ -173,7 +201,7 @@ fn main() -> ! {
      *    channel;
      * 3) Configure the trigger edge (EXTI_RTENR or EXTI_FTENR), select rising
      * edge trigger, falling edge trigger or double edges trigger;
-     * 4) Configure the EXTI interrupt in the NVIC/PFIC of the core to ensure 
+     * 4) Configure the EXTI interrupt in the NVIC/PFIC of the core to ensure
      * that it can respond correctly.
      *
      * Steps to use external hardware event:
@@ -218,9 +246,15 @@ fn main() -> ! {
 
     // count count
     let stk = &peripherals.SYSTICK;
-    stk.ctlr.modify(|_, w| w.stre().set_bit() // auto reset
-                            .stie().set_bit() // enable interrupt
-                            .ste().set_bit() // enable counter
+    stk.ctlr.modify(
+        |_, w| {
+            w.stre()
+                .set_bit() // auto reset
+                .stie()
+                .set_bit() // enable interrupt
+                .ste()
+                .set_bit()
+        }, // enable counter
     );
     unsafe {
         stk.cmphr.write(|w| w.bits(0x0000_0000));
@@ -232,7 +266,7 @@ fn main() -> ! {
 
     println!("\nThe meaning of life is to rewrite everything in Rust. 🦀🦀");
     println!("Without love, breath is just a clock ticking. Type something!\n");
- 
+
     let mut inp: u8 = 0;
     loop {
         unsafe {
@@ -252,16 +286,16 @@ fn main() -> ! {
                     } else {
                         println!(" 🐢");
                     }
-                },
-                (_x, 0x08) => {
-                    print!("{_x}{_x}🩹");
-                },
+                }
+                (x, 0x08) => {
+                    print!("{x}{x}🩹");
+                }
                 ('w', _) => {
                     print!("🧇");
-                },
-                (_x, _) => {
-                    print!("{}", _x);
-                },
+                }
+                (x, _) => {
+                    print!("{x}");
+                }
             }
             inp = x;
         }
