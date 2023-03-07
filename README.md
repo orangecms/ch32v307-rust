@@ -2,6 +2,10 @@
 
 This is work in progress, not usable yet. Help is welcome!
 
+## Demo
+
+![CH32V307 Rust demo](img/ch32v307-rs.gif)
+
 ## Resources
 
 - <https://github.com/r4d10n/wch-ch32v307-msc-ram> (demo)
