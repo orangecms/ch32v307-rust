@@ -101,7 +101,7 @@ impl fmt::Write for S {
         for &byte in s.as_bytes() {
             // Inject a carriage return before a newline
             if byte == b'\n' {
-                block!(self.write(b'\r')).unwrap();
+                block!(self.0.write(b'\r')).unwrap();
             }
             block!(self.0.write(byte)).unwrap();
         }
